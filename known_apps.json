@@ -1,0 +1,482 @@
+﻿[
+  {
+    "category": "浏览器",
+    "name": "Chrome",
+    "keywords": ["chrome", "googlechrome"]
+  },
+  {
+    "category": "浏览器",
+    "name": "Edge",
+    "keywords": ["msedge", "edge"]
+  },
+  {
+    "category": "浏览器",
+    "name": "Firefox",
+    "keywords": ["firefox"]
+  },
+  {
+    "category": "浏览器",
+    "name": "Opera",
+    "keywords": ["opera"]
+  },
+  {
+    "category": "浏览器",
+    "name": "Brave",
+    "keywords": ["brave"]
+  },
+  {
+    "category": "浏览器",
+    "name": "Vivaldi",
+    "keywords": ["vivaldi"]
+  },
+  {
+    "category": "开发工具",
+    "name": "VS Code",
+    "keywords": ["code", "vscode"]
+  },
+  {
+    "category": "开发工具",
+    "name": "Visual Studio",
+    "keywords": ["devenv", "visual studio"]
+  },
+  {
+    "category": "开发工具",
+    "name": "Cursor",
+    "keywords": ["cursor"]
+  },
+  {
+    "category": "开发工具",
+    "name": "PyCharm",
+    "keywords": ["pycharm"]
+  },
+  {
+    "category": "开发工具",
+    "name": "IntelliJ IDEA",
+    "keywords": ["idea64", "intellij"]
+  },
+  {
+    "category": "开发工具",
+    "name": "WebStorm",
+    "keywords": ["webstorm"]
+  },
+  {
+    "category": "开发工具",
+    "name": "CLion",
+    "keywords": ["clion"]
+  },
+  {
+    "category": "开发工具",
+    "name": "Android Studio",
+    "keywords": ["android studio", "studio64"]
+  },
+  {
+    "category": "开发工具",
+    "name": "Sublime Text",
+    "keywords": ["sublime_text", "sublime text"]
+  },
+  {
+    "category": "开发工具",
+    "name": "Notepad++",
+    "keywords": ["notepad++", "notepadpp"]
+  },
+  {
+    "category": "开发工具",
+    "name": "GitHub Desktop",
+    "keywords": ["githubdesktop", "github desktop"]
+  },
+  {
+    "category": "开发工具",
+    "name": "GitKraken",
+    "keywords": ["gitkraken"]
+  },
+  {
+    "category": "开发工具",
+    "name": "Docker Desktop",
+    "keywords": ["docker desktop", "dockerdesktop"]
+  },
+  {
+    "category": "开发工具",
+    "name": "Postman",
+    "keywords": ["postman"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Word",
+    "keywords": ["winword"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Excel",
+    "keywords": ["excel"]
+  },
+  {
+    "category": "办公协作",
+    "name": "PowerPoint",
+    "keywords": ["powerpnt", "powerpoint"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Outlook",
+    "keywords": ["outlook"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Teams",
+    "keywords": ["teams", "ms-teams"]
+  },
+  {
+    "category": "办公协作",
+    "name": "WPS",
+    "keywords": ["wps", "wpsoffice"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Notion",
+    "keywords": ["notion"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Obsidian",
+    "keywords": ["obsidian"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Trello",
+    "keywords": ["trello"]
+  },
+  {
+    "category": "办公协作",
+    "name": "DingTalk",
+    "keywords": ["dingtalk", "dingding", "钉钉"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Feishu",
+    "keywords": ["feishu", "lark", "飞书"]
+  },
+  {
+    "category": "办公协作",
+    "name": "Zoom",
+    "keywords": ["zoom"]
+  },
+  {
+    "category": "通讯社交",
+    "name": "Discord",
+    "keywords": ["discord"]
+  },
+  {
+    "category": "通讯社交",
+    "name": "Telegram",
+    "keywords": ["telegram"]
+  },
+  {
+    "category": "通讯社交",
+    "name": "Slack",
+    "keywords": ["slack"]
+  },
+  {
+    "category": "通讯社交",
+    "name": "WeChat",
+    "keywords": ["wechat", "weixin", "微信"]
+  },
+  {
+    "category": "通讯社交",
+    "name": "QQ",
+    "keywords": ["qq.exe", "tim.exe", "tim"]
+  },
+  {
+    "category": "通讯社交",
+    "name": "WhatsApp",
+    "keywords": ["whatsapp"]
+  },
+  {
+    "category": "音乐音频",
+    "name": "Spotify",
+    "keywords": ["spotify"]
+  },
+  {
+    "category": "音乐音频",
+    "name": "网易云音乐",
+    "keywords": ["cloudmusic", "netease music"]
+  },
+  {
+    "category": "音乐音频",
+    "name": "QQ 音乐",
+    "keywords": ["qqmusic"]
+  },
+  {
+    "category": "音乐音频",
+    "name": "Apple Music",
+    "keywords": ["apple music", "applemusic"]
+  },
+  {
+    "category": "音乐音频",
+    "name": "foobar2000",
+    "keywords": ["foobar2000", "foobar"]
+  },
+  {
+    "category": "音乐音频",
+    "name": "MusicBee",
+    "keywords": ["musicbee"]
+  },
+  {
+    "category": "视频娱乐",
+    "name": "PotPlayer",
+    "keywords": ["potplayer"]
+  },
+  {
+    "category": "视频娱乐",
+    "name": "VLC",
+    "keywords": ["vlc"]
+  },
+  {
+    "category": "视频娱乐",
+    "name": "MPC-HC",
+    "keywords": ["mpc-hc", "mpc hc"]
+  },
+  {
+    "category": "视频娱乐",
+    "name": "哔哩哔哩",
+    "keywords": ["bilibili"]
+  },
+  {
+    "category": "视频娱乐",
+    "name": "腾讯视频",
+    "keywords": ["qqlive", "tenvideo", "腾讯视频"]
+  },
+  {
+    "category": "视频娱乐",
+    "name": "爱奇艺",
+    "keywords": ["iqiyi", "爱奇艺"]
+  },
+  {
+    "category": "视频娱乐",
+    "name": "优酷",
+    "keywords": ["youku", "优酷"]
+  },
+  {
+    "category": "阅读学习",
+    "name": "SumatraPDF",
+    "keywords": ["sumatrapdf"]
+  },
+  {
+    "category": "阅读学习",
+    "name": "Calibre",
+    "keywords": ["calibre"]
+  },
+  {
+    "category": "阅读学习",
+    "name": "Zotero",
+    "keywords": ["zotero"]
+  },
+  {
+    "category": "阅读学习",
+    "name": "Kindle",
+    "keywords": ["kindle"]
+  },
+  {
+    "category": "阅读学习",
+    "name": "Adobe Acrobat",
+    "keywords": ["acrobat", "acrobat reader", "acrord32"]
+  },
+  {
+    "category": "阅读学习",
+    "name": "CAJViewer",
+    "keywords": ["cajviewer", "caj"]
+  },
+  {
+    "category": "设计创作",
+    "name": "Photoshop",
+    "keywords": ["photoshop", "photoshop.exe"]
+  },
+  {
+    "category": "设计创作",
+    "name": "Illustrator",
+    "keywords": ["illustrator", "illustrator.exe"]
+  },
+  {
+    "category": "设计创作",
+    "name": "Premiere Pro",
+    "keywords": ["premiere", "adobe premiere", "premierepro"]
+  },
+  {
+    "category": "设计创作",
+    "name": "After Effects",
+    "keywords": ["afterfx", "after effects"]
+  },
+  {
+    "category": "设计创作",
+    "name": "DaVinci Resolve",
+    "keywords": ["resolve", "davinci"]
+  },
+  {
+    "category": "设计创作",
+    "name": "Blender",
+    "keywords": ["blender"]
+  },
+  {
+    "category": "设计创作",
+    "name": "Figma",
+    "keywords": ["figma"]
+  },
+  {
+    "category": "设计创作",
+    "name": "OBS Studio",
+    "keywords": ["obs64", "obs studio", "obs"]
+  },
+  {
+    "category": "云盘效率",
+    "name": "OneDrive",
+    "keywords": ["onedrive"]
+  },
+  {
+    "category": "云盘效率",
+    "name": "Google Drive",
+    "keywords": ["google drive", "googledrivesync"]
+  },
+  {
+    "category": "云盘效率",
+    "name": "Dropbox",
+    "keywords": ["dropbox"]
+  },
+  {
+    "category": "云盘效率",
+    "name": "坚果云",
+    "keywords": ["坚果云", "nutstore"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "Steam",
+    "keywords": ["steam"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "Epic Games Launcher",
+    "keywords": ["epicgameslauncher", "epic games", "epic"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "Battle.net",
+    "keywords": ["battle.net", "battlenet", "blizzard"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "Riot Client",
+    "keywords": ["riot client", "riotclientservices", "riot"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "Ubisoft Connect",
+    "keywords": ["ubisoftconnect", "uplay", "ubisoft connect"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "EA app",
+    "keywords": ["ea app", "eadesktop", "electronic arts"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "Xbox",
+    "keywords": ["xbox", "gamingservices"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "WeGame",
+    "keywords": ["wegame"]
+  },
+  {
+    "category": "游戏平台",
+    "name": "Playnite",
+    "keywords": ["playnite"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "League of Legends",
+    "keywords": ["league of legends", "leagueclient", "lol"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "VALORANT",
+    "keywords": ["valorant"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Counter-Strike 2",
+    "keywords": ["cs2", "counter-strike 2", "csgo"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Dota 2",
+    "keywords": ["dota 2", "dota2"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "PUBG",
+    "keywords": ["pubg", "tslgame"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Apex Legends",
+    "keywords": ["apex", "r5apex"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Fortnite",
+    "keywords": ["fortnite"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Minecraft",
+    "keywords": ["minecraft"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Roblox",
+    "keywords": ["roblox"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Genshin Impact",
+    "keywords": ["genshin", "yuanshen"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Honkai: Star Rail",
+    "keywords": ["star rail", "honkai", "starrail"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Zenless Zone Zero",
+    "keywords": ["zenless", "zzz"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Black Myth: Wukong",
+    "keywords": ["wukong", "black myth"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Naraka: Bladepoint",
+    "keywords": ["naraka", "永劫无间"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "World of Warcraft",
+    "keywords": ["world of warcraft", "wow"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Overwatch 2",
+    "keywords": ["overwatch", "overwatch 2"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Hearthstone",
+    "keywords": ["hearthstone"]
+  },
+  {
+    "category": "热门游戏",
+    "name": "Diablo IV",
+    "keywords": ["diablo iv", "diablo4", "diablo"]
+  }
+]

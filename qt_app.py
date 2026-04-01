@@ -1,8 +1,11 @@
-﻿import json
+import json
 import os
 import sys
 import threading
+import ctypes
+from string import ascii_uppercase
 from pathlib import Path
+from urllib.parse import urlparse
 
 from PySide6.QtCore import QFileInfo, QObject, Qt, Signal
 from PySide6.QtGui import QColor, QCursor, QFont, QIcon, QPixmap
@@ -13,7 +16,26 @@ if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).resolve().parent
 else:
     BASE_DIR = Path(__file__).resolve().parent
-CONFIG_PATH = BASE_DIR / "scene_config.json"
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    BUNDLE_DIR = Path(getattr(sys, "_MEIPASS"))
+else:
+    BUNDLE_DIR = BASE_DIR
+
+
+def resolve_storage_path(filename):
+    preferred_root = Path(os.environ.get("APPDATA") or BASE_DIR) / "Windowscene"
+    try:
+        preferred_root.mkdir(parents=True, exist_ok=True)
+        return preferred_root / filename
+    except Exception:
+        return BASE_DIR / filename
+
+
+CONFIG_PATH = resolve_storage_path("scene_config.json")
+CACHE_PATH = resolve_storage_path("app_scan_cache.json")
+KNOWN_APPS_PATH = resolve_storage_path("known_apps.json")
+DEFAULT_CONFIG_BUNDLE_PATH = BUNDLE_DIR / "scene_config.json"
+DEFAULT_KNOWN_APPS_BUNDLE_PATH = BUNDLE_DIR / "known_apps.json"
 AUTOSTART_SCRIPT = "windowscene_autostart.cmd"
 BG = "#f3f3f3"
 PANEL = "#fbfbfb"
@@ -25,10 +47,10 @@ BORDER = "#e0e0e0"
 ACCENT = "#0067c0"
 ACCENT_HOVER = "#005a9e"
 ACCENT_SOFT = "#e8f4fc"
-SCENE_CARD_SIZE = 100
-APP_CARD_W = 120
-APP_CARD_H = 160
-OPTION_GRID_SPACING = 10
+SCENE_CARD_SIZE = 92
+APP_CARD_W = 112
+APP_CARD_H = 148
+OPTION_GRID_SPACING = 8
 DEFAULT_CONFIG = {
     "autostart_enabled": False,
     "launch_on_boot": True,
@@ -52,31 +74,92 @@ SCENE_META = {
     "编程": {"icon": "💻", "subtitle": "编辑器、终端与开发工具一起启动"},
     "工作": {"icon": "🗂", "subtitle": "办公协作与沟通应用整合在一个模式里"},
 }
-KNOWN_APPS = [
+DEFAULT_KNOWN_APPS = [
     {"name": "Chrome", "keywords": ["chrome"]}, {"name": "Edge", "keywords": ["msedge", "edge"]},
     {"name": "Firefox", "keywords": ["firefox"]}, {"name": "VS Code", "keywords": ["code"]},
     {"name": "Cursor", "keywords": ["cursor"]}, {"name": "PyCharm", "keywords": ["pycharm"]},
     {"name": "Steam", "keywords": ["steam"]}, {"name": "WeGame", "keywords": ["wegame"]},
+    {"name": "Epic Games", "keywords": ["epicgameslauncher", "epic games", "epic"]},
+    {"name": "Battle.net", "keywords": ["battle.net", "battlenet", "blizzard"]},
+    {"name": "League of Legends", "keywords": ["league of legends", "leagueclient", "riot client", "valorant", "riot"]},
+    {"name": "Minecraft", "keywords": ["minecraft"]},
+    {"name": "Genshin Impact", "keywords": ["genshin", "yuanshen"]},
+    {"name": "Honkai: Star Rail", "keywords": ["star rail", "honkai"]},
+    {"name": "Black Myth: Wukong", "keywords": ["wukong", "black myth"]},
+    {"name": "PotPlayer", "keywords": ["potplayer"]},
+    {"name": "VLC", "keywords": ["vlc"]},
+    {"name": "QQ 影音", "keywords": ["qqlive", "qqplayer"]},
+    {"name": "哔哩哔哩", "keywords": ["bilibili"]},
     {"name": "Spotify", "keywords": ["spotify"]}, {"name": "网易云音乐", "keywords": ["cloudmusic"]},
     {"name": "QQ 音乐", "keywords": ["qqmusic"]}, {"name": "PotPlayer", "keywords": ["potplayer"]},
     {"name": "VLC", "keywords": ["vlc"]}, {"name": "SumatraPDF", "keywords": ["sumatrapdf"]},
     {"name": "Calibre", "keywords": ["calibre"]}, {"name": "Zotero", "keywords": ["zotero"]},
     {"name": "Word", "keywords": ["winword", "word"]}, {"name": "Excel", "keywords": ["excel"]},
     {"name": "PowerPoint", "keywords": ["powerpnt", "powerpoint"]}, {"name": "Teams", "keywords": ["teams"]},
-    {"name": "Slack", "keywords": ["slack"]},
+    {"name": "Slack", "keywords": ["slack"]}, {"name": "Notion", "keywords": ["notion"]},
+    {"name": "Obsidian", "keywords": ["obsidian"]}, {"name": "Calibre", "keywords": ["calibre"]},
+    {"name": "Kindle", "keywords": ["kindle"]}, {"name": "Zotero", "keywords": ["zotero"]},
+    {"name": "Discord", "keywords": ["discord"]}, {"name": "Telegram", "keywords": ["telegram"]},
 ]
+
+NOISY_DIRS = {
+    "$recycle.bin",
+    "system volume information",
+    "windows",
+    "winsxs",
+    "programdata",
+    "temp",
+    "tmp",
+    "cache",
+    "__pycache__",
+}
+SKIP_NAME_KEYWORDS = ("unins", "setup", "install", "update", "crash", "helper")
 
 
 def deep_copy_default():
     return json.loads(json.dumps(DEFAULT_CONFIG, ensure_ascii=False))
 
 
-def load_config():
-    if not CONFIG_PATH.exists():
-        save_config(deep_copy_default())
+def ensure_parent_dir(path):
     try:
-        data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return path
     except Exception:
+        fallback_path = BASE_DIR / path.name
+        fallback_path.parent.mkdir(parents=True, exist_ok=True)
+        return fallback_path
+
+
+def write_json_file(path, data):
+    target = ensure_parent_dir(path)
+    target.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def load_json_file(path, fallback=None):
+    try:
+        return json.loads(path.read_text(encoding="utf-8-sig"))
+    except Exception:
+        return fallback
+
+
+def ensure_user_file(user_path, bundled_path, default_data):
+    target = user_path
+    if target.exists():
+        return
+    target = ensure_parent_dir(target)
+    if bundled_path.exists():
+        try:
+            target.write_text(bundled_path.read_text(encoding="utf-8-sig"), encoding="utf-8")
+            return
+        except Exception:
+            pass
+    write_json_file(target, default_data)
+
+
+def load_config():
+    ensure_user_file(CONFIG_PATH, DEFAULT_CONFIG_BUNDLE_PATH, deep_copy_default())
+    data = load_json_file(CONFIG_PATH)
+    if not isinstance(data, dict):
         data = deep_copy_default()
         save_config(data)
     merged = deep_copy_default()
@@ -88,7 +171,50 @@ def load_config():
 
 
 def save_config(config):
-    CONFIG_PATH.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_json_file(CONFIG_PATH, config)
+
+
+def load_known_apps():
+    ensure_user_file(KNOWN_APPS_PATH, DEFAULT_KNOWN_APPS_BUNDLE_PATH, DEFAULT_KNOWN_APPS)
+    data = load_json_file(KNOWN_APPS_PATH)
+    if not isinstance(data, list):
+        write_json_file(KNOWN_APPS_PATH, DEFAULT_KNOWN_APPS)
+        return DEFAULT_KNOWN_APPS
+    valid = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("name")
+        keywords = item.get("keywords")
+        if not name or not isinstance(keywords, list):
+            continue
+        record = {
+            "name": str(name),
+            "keywords": [str(keyword).lower() for keyword in keywords if str(keyword).strip()],
+        }
+        if item.get("category"):
+            record["category"] = str(item.get("category"))
+        valid.append(record)
+    return valid or DEFAULT_KNOWN_APPS
+
+
+KNOWN_APPS = load_known_apps()
+
+
+def load_scan_cache():
+    if not CACHE_PATH.exists():
+        return []
+    try:
+        data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    if not isinstance(data, list):
+        return []
+    return unique_app_names(unique_app_entries(data))
+
+
+def save_scan_cache(apps):
+    write_json_file(CACHE_PATH, unique_app_names(unique_app_entries(apps)))
 
 
 def normalize_path(raw_path):
@@ -146,35 +272,56 @@ def unique_app_names(apps):
     return results
 
 
-def detect_candidate_locations():
-    env = os.environ
-    locations = [
-        Path(env.get("ProgramData", "C:/ProgramData")) / "Microsoft/Windows/Start Menu/Programs",
-        Path(env.get("APPDATA", "")) / "Microsoft/Windows/Start Menu/Programs",
-        Path.home() / "Desktop", Path("C:/Program Files"), Path("C:/Program Files (x86)"),
-        Path(env.get("LOCALAPPDATA", "")) / "Programs",
-    ]
-    return [path for path in locations if str(path).strip() and path.exists()]
+def list_drive_roots():
+    roots = []
+    for letter in ascii_uppercase:
+        root = Path(f"{letter}:/")
+        if root.exists():
+            roots.append(root)
+    return roots
 
 
-def scan_for_apps(limit=300):
+def is_interesting_app(path):
+    lowered = path.name.lower()
+    if path.suffix.lower() not in {".lnk", ".exe"}:
+        return False
+    if any(keyword in lowered for keyword in SKIP_NAME_KEYWORDS):
+        return False
+    return any(any(keyword in lowered for keyword in known["keywords"]) for known in KNOWN_APPS)
+
+
+def guess_app_name(path):
+    lowered = path.name.lower()
+    for known in KNOWN_APPS:
+        if any(keyword in lowered for keyword in known["keywords"]):
+            return known["name"]
+    name = path.stem.replace("_", " ").replace("-", " ").strip()
+    return name or path.stem
+
+
+def scan_for_apps(limit=2500, roots=None):
     results, count = [], 0
-    for location in detect_candidate_locations():
-        try:
-            for path in location.rglob("*"):
-                if count >= limit:
-                    return results
-                if path.suffix.lower() not in {".lnk", ".exe"}:
-                    continue
-                lowered = path.name.lower()
-                for known in KNOWN_APPS:
-                    if any(keyword in lowered for keyword in known["keywords"]):
-                        results.append({"name": known["name"], "path": str(path), "source": "智能识别"})
-                        count += 1
-                        break
-        except (PermissionError, OSError):
-            continue
-    return unique_app_entries(results)
+    scan_roots = roots or list_drive_roots()
+    for root in scan_roots:
+        for current_root, dirnames, filenames in os.walk(root, topdown=True):
+            dirnames[:] = [item for item in dirnames if item.lower() not in NOISY_DIRS]
+            try:
+                base = Path(current_root)
+                for filename in filenames:
+                    if count >= limit:
+                        final = unique_app_names(unique_app_entries(results))
+                        save_scan_cache(final)
+                        return final
+                    path = base / filename
+                    if not is_interesting_app(path):
+                        continue
+                    results.append({"name": guess_app_name(path), "path": str(path), "source": "智能识别"})
+                    count += 1
+            except (PermissionError, OSError):
+                continue
+    final = unique_app_names(unique_app_entries(results))
+    save_scan_cache(final)
+    return final
 
 
 def recommend_apps_for_scene(scene_name, config, scanned_apps):
@@ -192,10 +339,71 @@ def open_target(path):
     os.startfile(path)
 
 
-def app_icon_pixmap(path, size=40):
-    provider = QFileIconProvider()
+def parse_url_shortcut(path):
     try:
-        file_icon = provider.icon(QFileInfo(path))
+        lines = Path(path).read_text(encoding="utf-8-sig", errors="ignore").splitlines()
+    except Exception:
+        return {}
+    result = {}
+    for line in lines:
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        result[key.strip().lower()] = value.strip()
+    return result
+
+
+def find_browser_executable():
+    candidates = [
+        Path(os.environ.get("ProgramFiles", "")) / "Google/Chrome/Application/chrome.exe",
+        Path(os.environ.get("ProgramFiles(x86)", "")) / "Google/Chrome/Application/chrome.exe",
+        Path(os.environ.get("ProgramFiles", "")) / "Microsoft/Edge/Application/msedge.exe",
+        Path(os.environ.get("ProgramFiles(x86)", "")) / "Microsoft/Edge/Application/msedge.exe",
+        Path(os.environ.get("LocalAppData", "")) / "Programs/Opera/launcher.exe",
+        Path(os.environ.get("ProgramFiles", "")) / "Mozilla Firefox/firefox.exe",
+        Path(os.environ.get("ProgramFiles(x86)", "")) / "Mozilla Firefox/firefox.exe",
+    ]
+    for candidate in candidates:
+        if str(candidate).strip() and candidate.exists():
+            return candidate
+    return None
+
+
+def load_app_icon():
+    icon_path = BASE_DIR / "app_icon.ico"
+    return QIcon(str(icon_path)) if icon_path.exists() else QIcon()
+
+
+def set_windows_app_id():
+    if os.name != "nt":
+        return
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("sakura-love.Windowscene")
+    except Exception:
+        pass
+
+
+def app_icon_pixmap(path, size=40):
+    file_path = Path(path)
+    provider = QFileIconProvider()
+    if file_path.suffix.lower() == ".url":
+        shortcut_info = parse_url_shortcut(file_path)
+        icon_file = shortcut_info.get("iconfile")
+        if icon_file:
+            icon_path = Path(icon_file.strip('"'))
+            if icon_path.exists():
+                pixmap = app_icon_pixmap(str(icon_path), size)
+                if not pixmap.isNull():
+                    return pixmap
+        shortcut_url = shortcut_info.get("url", "")
+        if shortcut_url.startswith(("http://", "https://")):
+            browser_path = find_browser_executable()
+            if browser_path:
+                pixmap = app_icon_pixmap(str(browser_path), size)
+                if not pixmap.isNull():
+                    return pixmap
+    try:
+        file_icon = provider.icon(QFileInfo(str(file_path)))
         if not file_icon.isNull():
             pixmap = file_icon.pixmap(size, size)
             if not pixmap.isNull():
@@ -203,13 +411,25 @@ def app_icon_pixmap(path, size=40):
     except Exception:
         pass
     try:
-        icon = QIcon(path)
+        icon = QIcon(str(file_path))
         if not icon.isNull():
             pixmap = icon.pixmap(size, size)
             if not pixmap.isNull():
                 return pixmap
     except Exception:
         pass
+    if file_path.suffix.lower() == ".url":
+        shortcut_url = parse_url_shortcut(file_path).get("url", "")
+        if shortcut_url.startswith(("http://", "https://")):
+            host = urlparse(shortcut_url).netloc.lower()
+            if host:
+                browser_path = find_browser_executable()
+                if browser_path:
+                    icon = QIcon(str(browser_path))
+                    if not icon.isNull():
+                        pixmap = icon.pixmap(size, size)
+                        if not pixmap.isNull():
+                            return pixmap
     return QPixmap()
 
 
@@ -259,8 +479,8 @@ class SceneCard(ClickableCard):
         meta = SCENE_META.get(scene_name, {"icon": "⬜", "subtitle": ""})
         self.setFixedSize(SCENE_CARD_SIZE, SCENE_CARD_SIZE)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 14, 12, 12)
-        layout.setSpacing(4)
+        layout.setContentsMargins(10, 12, 10, 10)
+        layout.setSpacing(3)
         icon = QLabel(meta["icon"])
         icon.setObjectName("sceneIcon")
         icon.setAlignment(Qt.AlignCenter)
@@ -278,11 +498,11 @@ class AppCard(ClickableCard):
         self.app = app
         self.setFixedSize(APP_CARD_W, APP_CARD_H)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 10, 8, 8)
-        layout.setSpacing(3)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(2)
         self.icon_label = QLabel()
-        self.icon_label.setFixedSize(48, 48)
-        self.icon_label.setPixmap(app_icon_pixmap(app["path"], 48))
+        self.icon_label.setFixedSize(42, 42)
+        self.icon_label.setPixmap(app_icon_pixmap(app["path"], 42))
         self.icon_label.setScaledContents(True)
         self.icon_label.setAlignment(Qt.AlignCenter)
         title = QLabel(app["name"])
@@ -296,14 +516,14 @@ class AppCard(ClickableCard):
         path_label.setWordWrap(True)
         path_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.icon_label, 0, Qt.AlignCenter)
-        layout.addSpacing(10)
+        layout.addSpacing(6)
         layout.addWidget(title)
         layout.addWidget(source)
         layout.addWidget(path_label)
         layout.addStretch(1)
         self.marker = QLabel("✓" if selected else "")
         self.marker.setObjectName("marker")
-        self.marker.setFixedSize(18, 18)
+        self.marker.setFixedSize(16, 16)
         self.marker.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.marker, 0, Qt.AlignRight | Qt.AlignBottom)
         self.update_marker()
@@ -438,7 +658,7 @@ class ConfigDialog(QDialog):
 
     def add_app(self):
         scene_name = self.window.current_scene_name
-        file_path, _ = QFileDialog.getOpenFileName(self, "选择应用或快捷方式", str(BASE_DIR), "应用或快捷方式 (*.exe *.lnk);;所有文件 (*.*)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择任意文件作为可选启动项", str(BASE_DIR), "所有文件 (*.*)")
         if not file_path:
             return
         app_name = Path(file_path).stem
@@ -517,7 +737,7 @@ class QuickLaunchDialog(QDialog):
             return
         widgets = []
         for app in recommendations:
-            card = AppCard(app, selected=app.get("source") == "预设配置")
+            card = AppCard(app, selected=False)
             card.clicked.connect(lambda current=card: current.set_selected(not current.selected))
             self.cards.append(card)
             widgets.append(card)
@@ -592,16 +812,16 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.boot_mode = boot_mode
         self.config = load_config()
-        self.scanned_apps = []
+        self.scanned_apps = load_scan_cache()
         self.current_scene_name = self.scene_names()[0]
         self.app_cards = {}
         self.scanner_bridge = ScannerBridge()
-        self.scanner_bridge.started.connect(lambda: self.set_status("正在智能识别常用应用..."))
+        self.scanner_bridge.started.connect(lambda: self.set_status("正在全盘扫描可选应用，首次扫描可能需要一些时间..."))
         self.scanner_bridge.finished.connect(self.on_scan_finished)
         self.setWindowTitle(APP_NAME)
-        self.setWindowIcon(QIcon(str(BASE_DIR / "app_icon.ico")))
-        self.resize(1260, 840)
-        self.setMinimumSize(1120, 760)
+        self.setWindowIcon(load_app_icon())
+        self.resize(1220, 780)
+        self.setMinimumSize(1040, 700)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowMinMaxButtonsHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setStyleSheet(self.app_stylesheet())
@@ -651,7 +871,7 @@ class MainWindow(QMainWindow):
         QPushButton#primaryButton {{ background: {ACCENT}; color: white; border: none; font-weight: 600; border-radius: 6px; padding: 10px 16px; min-height: 36px; }}
         QPushButton#primaryButton:hover {{ background: {ACCENT_HOVER}; }}
         QPushButton#primaryButton:pressed {{ background: #004c8c; }}
-        QPushButton#actionCard {{ background: {CARD}; color: {TEXT}; border: 1px solid {BORDER}; border-radius: 8px; padding: 8px; font-size: 9pt; }}
+        QPushButton#actionCard {{ background: {CARD}; color: {TEXT}; border: 1px solid {BORDER}; border-radius: 8px; padding: 10px 12px; font-size: 10pt; min-height: 48px; text-align: center; }}
         QPushButton#actionCard:hover {{ border-color: #c4c4c4; background: {CARD_ALT}; }}
         QPushButton#actionCard:pressed {{ background: #e8e8e8; border-color: #b3b3b3; }}
         QCheckBox {{ color: {TEXT}; spacing: 8px; }}
@@ -698,10 +918,10 @@ class MainWindow(QMainWindow):
         content_wrapper = QWidget()
         content_wrapper.setObjectName("contentWrapper")
         content_shell = QVBoxLayout(content_wrapper)
-        content_shell.setContentsMargins(18, 14, 18, 18)
-        content_shell.setSpacing(14)
+        content_shell.setContentsMargins(14, 12, 14, 14)
+        content_shell.setSpacing(12)
         header_row = QHBoxLayout()
-        header_row.setSpacing(12)
+        header_row.setSpacing(10)
         header_title_col = QVBoxLayout()
         header_title_col.setSpacing(2)
         self._drag_widget = QWidget()
@@ -735,20 +955,20 @@ class MainWindow(QMainWindow):
         body.setObjectName("heroBody")
         content_shell.addWidget(body)
         content = QHBoxLayout()
-        content.setSpacing(14)
+        content.setSpacing(12)
         content_shell.addLayout(content, 1)
         left_panel = self.create_panel()
         right_panel = self.create_panel()
         content.addWidget(left_panel, 1)
-        right_panel.setFixedWidth(340)
+        right_panel.setFixedWidth(360)
         content.addWidget(right_panel)
         left_layout = left_panel.layout()
-        left_layout.setContentsMargins(18, 18, 18, 18)
-        left_layout.setSpacing(12)
+        left_layout.setContentsMargins(14, 14, 14, 14)
+        left_layout.setSpacing(10)
 
         scene_surface = self.create_soft_card()
-        scene_surface.layout().setContentsMargins(12, 10, 12, 10)
-        scene_surface.layout().setSpacing(12)
+        scene_surface.layout().setContentsMargins(10, 8, 10, 8)
+        scene_surface.layout().setSpacing(8)
         scene_surface.layout().addWidget(self.section_label("情景模式"))
         scene_host = QWidget()
         scene_host.setObjectName("sceneHost")
@@ -760,7 +980,7 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(scene_surface, 0)
 
         apps_surface = self.create_soft_card()
-        apps_surface.layout().setContentsMargins(12, 12, 12, 12)
+        apps_surface.layout().setContentsMargins(10, 10, 10, 10)
         apps_scroll = QScrollArea()
         apps_scroll.setWidgetResizable(True)
         apps_scroll.setFrameShape(QFrame.NoFrame)
@@ -779,19 +999,30 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(apps_surface, 1)
 
         right_layout = right_panel.layout()
-        right_layout.setContentsMargins(14, 14, 14, 14)
-        right_layout.setSpacing(10)
+        right_layout.setContentsMargins(10, 10, 10, 10)
+        right_layout.setSpacing(0)
+        side_scroll = QScrollArea()
+        side_scroll.setWidgetResizable(True)
+        side_scroll.setFrameShape(QFrame.NoFrame)
+        side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        side_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        side_host = QWidget()
+        side_layout = QVBoxLayout(side_host)
+        side_layout.setContentsMargins(2, 2, 2, 2)
+        side_layout.setSpacing(10)
+        side_scroll.setWidget(side_host)
+        right_layout.addWidget(side_scroll, 1)
 
         focus_card = self.create_soft_card()
-        focus_card.layout().setContentsMargins(16, 16, 16, 16)
-        focus_card.layout().setSpacing(10)
+        focus_card.layout().setContentsMargins(14, 14, 14, 14)
+        focus_card.layout().setSpacing(8)
         focus_card.layout().addWidget(self.section_label("当前模式"))
         focus_row = QHBoxLayout()
-        focus_row.setSpacing(12)
+        focus_row.setSpacing(10)
         self.focus_icon = QLabel("")
         self.focus_icon.setObjectName("focusIcon")
         self.focus_icon.setAlignment(Qt.AlignCenter)
-        self.focus_icon.setFixedSize(56, 56)
+        self.focus_icon.setFixedSize(48, 48)
         focus_text_col = QVBoxLayout()
         focus_text_col.setSpacing(4)
         self.side_title = QLabel("")
@@ -804,42 +1035,50 @@ class MainWindow(QMainWindow):
         focus_row.addWidget(self.focus_icon)
         focus_row.addLayout(focus_text_col, 1)
         focus_card.layout().addLayout(focus_row)
-        right_layout.addWidget(focus_card)
-
-        metrics_card = self.create_soft_card()
-        metrics_card.layout().setContentsMargins(16, 16, 16, 16)
-        metrics_card.layout().setSpacing(10)
-        metrics_card.layout().addWidget(self.section_label("模式信息"))
         self.side_stats = QLabel("")
         self.side_stats.setObjectName("sideStat")
         self.side_stats.setWordWrap(True)
         self.side_meta = QLabel("")
         self.side_meta.setObjectName("rightMeta")
         self.side_meta.setWordWrap(True)
-        metrics_card.layout().addWidget(self.side_stats)
-        metrics_card.layout().addWidget(self.side_meta)
-        right_layout.addWidget(metrics_card)
+        self.inline_status = QLabel("准备就绪")
+        self.inline_status.setObjectName("statusText")
+        self.inline_status.setWordWrap(True)
+        focus_card.layout().addWidget(self.side_stats)
+        focus_card.layout().addWidget(self.side_meta)
+        focus_card.layout().addWidget(self.inline_status)
+        side_layout.addWidget(focus_card)
 
         action_card = self.create_soft_card()
-        action_card.layout().setContentsMargins(16, 16, 16, 16)
+        action_card.layout().setContentsMargins(14, 14, 14, 14)
         action_card.layout().setSpacing(10)
         action_card.layout().addWidget(self.section_label("快捷操作"))
-        actions_row = QHBoxLayout()
-        actions_row.setSpacing(10)
-        for icon, text, handler in (("▶", "一键启动", self.launch_selected_scene), ("🔄", "刷新推荐", self.refresh_recommendations), ("⚙", "情景配置", self.open_config_window)):
-            btn = QPushButton(f"{icon}\n{text}")
+        actions_grid = QGridLayout()
+        actions_grid.setHorizontalSpacing(8)
+        actions_grid.setVerticalSpacing(8)
+        actions_grid.setColumnStretch(0, 1)
+        actions_grid.setColumnStretch(1, 1)
+        action_items = (
+            ("一键启动当前情景", self.launch_selected_scene),
+            ("刷新推荐应用", self.refresh_recommendations),
+            ("全盘扫描应用", self.start_full_scan),
+            ("扫描指定位置", self.start_path_scan),
+            ("打开情景配置", self.open_config_window),
+        )
+        for index, (text, handler) in enumerate(action_items):
+            btn = QPushButton(text)
             btn.setObjectName("actionCard")
-            btn.setFixedSize(80, 80)
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             btn.clicked.connect(handler)
-            actions_row.addWidget(btn)
-        actions_row.addStretch(1)
-        action_card.layout().addLayout(actions_row)
-        right_layout.addWidget(action_card)
+            row, col = divmod(index, 2)
+            actions_grid.addWidget(btn, row, col)
+        action_card.layout().addLayout(actions_grid)
+        side_layout.addWidget(action_card)
 
         settings = self.create_soft_card()
-        settings.layout().setContentsMargins(16, 16, 16, 16)
+        settings.layout().setContentsMargins(14, 14, 14, 14)
         settings_layout = settings.layout()
-        settings_layout.setSpacing(10)
+        settings_layout.setSpacing(8)
         settings_layout.addWidget(self.section_label("系统设置"))
         self.autostart_checkbox = QCheckBox("开机自动启动本程序")
         self.smart_scan_checkbox = QCheckBox("启动时自动智能识别应用")
@@ -847,18 +1086,18 @@ class MainWindow(QMainWindow):
         for checkbox in (self.autostart_checkbox, self.smart_scan_checkbox, self.launch_on_boot_checkbox):
             checkbox.stateChanged.connect(self.save_system_settings)
             settings_layout.addWidget(checkbox)
-        right_layout.addWidget(settings)
+        side_layout.addWidget(settings)
 
         status_card = self.create_soft_card()
-        status_card.layout().setContentsMargins(16, 16, 16, 16)
-        status_card.layout().setSpacing(8)
+        status_card.layout().setContentsMargins(14, 14, 14, 14)
+        status_card.layout().setSpacing(6)
         status_card.layout().addWidget(self.section_label("状态"))
         self.status_label = QLabel("准备就绪")
         self.status_label.setObjectName("statusText")
         self.status_label.setWordWrap(True)
         status_card.layout().addWidget(self.status_label)
-        right_layout.addWidget(status_card)
-        right_layout.addStretch(1)
+        side_layout.addWidget(status_card)
+        side_layout.addStretch(1)
         shell.addWidget(content_wrapper, 1)
 
     def _title_mouse_press(self, event):
@@ -882,16 +1121,16 @@ class MainWindow(QMainWindow):
         panel = QFrame()
         panel.setObjectName("panel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(14)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(10)
         return panel
 
     def create_soft_card(self):
         card = QFrame()
         card.setObjectName("softCard")
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(14, 14, 14, 14)
-        layout.setSpacing(8)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(6)
         return card
 
     def empty_card(self, title_text, subtitle_text):
@@ -912,6 +1151,8 @@ class MainWindow(QMainWindow):
 
     def set_status(self, text):
         self.status_label.setText(text)
+        if hasattr(self, "inline_status"):
+            self.inline_status.setText(text)
 
     def refresh_all(self):
         self.refresh_scene_cards()
@@ -959,7 +1200,7 @@ class MainWindow(QMainWindow):
             self.set_status("当前情景没有推荐应用")
             return
         for app in recommendations:
-            card = AppCard(app, selected=app.get("source") == "预设配置")
+            card = AppCard(app, selected=False)
             card.clicked.connect(lambda current=card: current.set_selected(not current.selected))
             self.app_cards[f"{app['name']}|{app['path']}"] = card
             cards.append(card)
@@ -1004,11 +1245,24 @@ class MainWindow(QMainWindow):
         if BootDialog(self).exec() == QDialog.Rejected:
             self.close()
 
-    def start_scan_in_background(self):
+    def run_scan_in_background(self, roots=None, status_text="正在扫描可选应用，请稍候..."):
         def runner():
             self.scanner_bridge.started.emit()
-            self.scanner_bridge.finished.emit(scan_for_apps())
+            self.scanner_bridge.finished.emit(scan_for_apps(roots=roots))
         threading.Thread(target=runner, daemon=True).start()
+        self.set_status(status_text)
+
+    def start_scan_in_background(self):
+        self.run_scan_in_background(status_text="正在全盘扫描可选应用，首次扫描可能需要一些时间...")
+
+    def start_full_scan(self):
+        self.run_scan_in_background(status_text="正在全盘扫描可选应用，首次扫描可能需要一些时间...")
+
+    def start_path_scan(self):
+        directory = QFileDialog.getExistingDirectory(self, "选择要扫描的位置", str(Path.home()))
+        if not directory:
+            return
+        self.run_scan_in_background(roots=[Path(directory)], status_text=f"正在扫描指定位置：{directory}")
 
     def on_scan_finished(self, scanned):
         self.scanned_apps = scanned
@@ -1018,6 +1272,9 @@ class MainWindow(QMainWindow):
 
 def main(boot_mode=False):
     app = QApplication.instance() or QApplication(sys.argv)
+    set_windows_app_id()
+    app.setApplicationName(APP_NAME)
+    app.setWindowIcon(load_app_icon())
     app.setStyle("Fusion")
     app.setFont(QFont("Segoe UI", 10))
     window = MainWindow(boot_mode=boot_mode)
