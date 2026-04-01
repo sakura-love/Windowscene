@@ -5,6 +5,13 @@
 
 当前版本基于 `PySide6` 构建，界面风格偏向 Windows 11。
 
+## 仓库信息
+
+- GitHub: `https://github.com/sakura-love/Windowscene`
+- License: `MIT`
+- 平台: `Windows`
+- 语言: `Python 3`
+
 ## 功能特点
 
 - 开机自启动
@@ -20,6 +27,14 @@
 - Python 3
 - PySide6
 
+## 界面预览
+
+当前仓库已预留展示位置，建议后续补充：
+
+- 主界面截图
+- 开机情景选择弹窗截图
+- 推荐应用选择截图
+
 ## 项目结构
 
 ```text
@@ -28,6 +43,8 @@ qt_app.py
 scene_config.json
 requirements.txt
 app_icon.ico
+LICENSE
+RELEASE_TEMPLATE.md
 ```
 
 ## 安装依赖
@@ -49,6 +66,12 @@ python app.py
 ```powershell
 python -m PyInstaller --noconfirm --clean --onefile --windowed --name Windowscene --icon app_icon.ico app.py
 ```
+
+## 发布建议
+
+- 发布文案可参考 `RELEASE_TEMPLATE.md`
+- 可在 GitHub Releases 中上传 `Windowscene.exe`
+- 建议在仓库首页补上界面截图与版本说明
 
 ## 配置说明
 
