@@ -1,0 +1,82 @@
+{
+  "autostart_enabled": false,
+  "launch_on_boot": true,
+  "smart_scan_enabled": true,
+  "scenes": {
+    "游戏": {
+      "keywords": [
+        "steam",
+        "epic",
+        "battle",
+        "game",
+        "wegame",
+        "riot"
+      ],
+      "apps": []
+    },
+    "视频": {
+      "keywords": [
+        "potplayer",
+        "vlc",
+        "bilibili",
+        "youtube",
+        "netflix",
+        "腾讯视频"
+      ],
+      "apps": []
+    },
+    "音乐": {
+      "keywords": [
+        "spotify",
+        "cloudmusic",
+        "qqmusic",
+        "musicbee",
+        "foobar"
+      ],
+      "apps": []
+    },
+    "阅读": {
+      "keywords": [
+        "calibre",
+        "sumatrapdf",
+        "zotero",
+        "kindle",
+        "pdf"
+      ],
+      "apps": []
+    },
+    "上网": {
+      "keywords": [
+        "chrome",
+        "edge",
+        "firefox",
+        "browser",
+        "opera"
+      ],
+      "apps": []
+    },
+    "编程": {
+      "keywords": [
+        "code",
+        "pycharm",
+        "cursor",
+        "terminal",
+        "git",
+        "visual studio"
+      ],
+      "apps": []
+    },
+    "工作": {
+      "keywords": [
+        "word",
+        "excel",
+        "powerpoint",
+        "teams",
+        "slack",
+        "outlook",
+        "钉钉"
+      ],
+      "apps": []
+    }
+  }
+}
