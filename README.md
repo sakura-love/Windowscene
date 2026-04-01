@@ -1,39 +1,55 @@
 ﻿# Windows 情景模式
 
-一个面向 Windows 的桌面情景模式软件。
-开机后弹出“本次开机做什么”的情景选择窗口，根据用户当前要做的事情组织推荐应用，并由用户自己勾选本次真正要启动的软件。
+<p align="center">
+  <img src="screenshots/main2.png" alt="Windowscene 主界面" width="860" />
+</p>
 
-当前版本基于 `PySide6` 构建，界面风格偏向 Windows 11，支持单文件 `exe` 分发。
+<p align="center">
+  <strong>把 Windows 开机后的第一步，变成一次有方向的选择。</strong>
+</p>
 
-## 仓库信息
+<p align="center">
+  一个偏 Windows 11 风格的桌面情景模式工具。<br>
+  开机后先选择你这次要做什么，再从推荐应用里勾选真正要启动的软件，而不是被一堆固定自启动打断节奏。
+</p>
 
-- GitHub: `https://github.com/sakura-love/Windowscene`
-- License: `MIT`
-- 平台: `Windows`
-- 技术栈: `Python 3` + `PySide6`
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="Windows" />
+  <img src="https://img.shields.io/badge/Python-3.x-3776AB" alt="Python" />
+  <img src="https://img.shields.io/badge/UI-PySide6-41CD52" alt="PySide6" />
+  <img src="https://img.shields.io/badge/license-MIT-black" alt="MIT" />
+</p>
 
-## 当前功能
+## 这个项目解决什么问题
 
-- 支持开机自启动
-- 支持开机后弹出情景模式选择
-- 支持情景模式：游戏、视频、音乐、阅读、上网、编程、工作
-- 支持手动配置每个情景的应用候选项
-- 配置的应用仅作为可选项，不会默认全部自动启动
-- 支持推荐应用卡片勾选后再启动
-- 支持全盘扫描和指定位置扫描应用
-- 支持首次扫描后本地缓存结果
-- 支持分类化常见应用和游戏规则库
-- 支持 `.url`、`.exe`、`.lnk` 等类型的图标兜底识别
+很多 Windows 用户的开机体验都很混乱：
 
-## 下载与使用
+- 软件一股脑自启动，但这次其实根本用不上
+- 想进入“工作 / 游戏 / 编程 / 阅读”状态时，还得自己手动找一遍应用
+- 常用软件越来越多，但每次真正要开的只有其中一小部分
 
-如果你只是想使用软件，直接下载 Release 中的 `Windowscene.exe` 即可。
+`Windows 情景模式` 的思路是：
+先问你“这次开机要做什么”，再围绕这个情景给出一组更贴近当下任务的应用选项，由你自己勾选本次真正要启动的内容。
 
-当前发布版已经支持单文件分发：
+## 核心亮点
 
-- 用户只需要下载一个 `exe`
-- 默认配置会在首次运行时自动初始化
-- 后续情景配置会由程序自动保存
+- 开机后弹出情景选择，不再被固定自启动绑架
+- 情景模式和推荐应用都用卡片式图形界面呈现
+- 预设应用只是候选项，不会默认全部自动启动
+- 支持全盘扫描和指定目录扫描，逐步补全应用库
+- 首次扫描后会本地缓存，后续打开更快
+- 支持 `.url`、`.exe`、`.lnk` 等常见入口的图标兜底识别
+- 当前发布版支持单文件 `exe` 分发，下载后可直接运行
+
+## 当前支持的情景
+
+- 游戏
+- 视频
+- 音乐
+- 阅读
+- 上网
+- 编程
+- 工作
 
 ## 界面预览
 
@@ -41,23 +57,45 @@
 
 ![Windowscene 主界面](screenshots/main2.png)
 
-## 本地开发
+## 为什么值得 Fork
 
-### 安装依赖
+这个项目很适合作为二次开发起点，因为它已经把几个麻烦但基础的部分先搭起来了：
+
+- Windows 桌面 GUI 基础框架
+- 情景模式与推荐应用的主流程
+- 应用扫描、去重、缓存和分类规则
+- 开机启动逻辑
+- 单文件 EXE 打包链路
+
+如果你想继续做成更完整的桌面效率工具，可以直接在这个基础上扩展：
+
+- 托盘常驻
+- 更完整的已安装应用识别
+- 音量、电源模式、勿扰模式等系统动作
+- 最近使用情景 / 智能推荐
+- 游戏模式、创作模式、学习模式等更细分场景
+
+## 下载与使用
+
+如果你只是想使用软件，直接下载 Release 里的 `Windowscene.exe` 即可。
+
+当前版本已经支持单文件分发：
+
+- 用户只需要下载一个 `exe`
+- 默认配置会在首次运行时自动初始化
+- 后续情景配置会由程序自动保存
+
+## 快速开始
+
+### 本地运行
 
 ```powershell
 cd E:\AIwork\Windowscene-GitHub
 pip install -r requirements.txt
-```
-
-### 运行
-
-```powershell
-cd E:\AIwork\Windowscene-GitHub
 python app.py
 ```
 
-### 打包
+### 打包为 EXE
 
 ```powershell
 python -m PyInstaller --noconfirm --clean --onefile --windowed --name Windowscene --icon app_icon.ico app.py
@@ -71,11 +109,10 @@ qt_app.py
 known_apps.json
 requirements.txt
 app_icon.ico
-LICENSE
-RELEASE_TEMPLATE.md
+screenshots/
 ```
 
-## 配置说明
+## 配置与数据
 
 程序运行时会维护这些数据：
 
@@ -94,9 +131,13 @@ RELEASE_TEMPLATE.md
 - 补强 `.url` 快捷方式与部分 `.exe` 的图标获取逻辑
 - 扩充常见应用与游戏分类规则库
 
-## 后续方向
+## 路线图
 
-- 继续提升 `.lnk`、`.url`、`.exe` 图标提取成功率
+- 提升 `.lnk`、`.url`、`.exe` 图标提取成功率
 - 增加更完整的 Windows 已安装应用识别
 - 增加托盘常驻
-- 增加系统动作，例如音量、电源模式、勿扰模式
+- 增加更多系统级情景动作
+
+## License
+
+MIT
