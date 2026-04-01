@@ -1,31 +1,39 @@
 ﻿# Windows 情景模式
 
-一个面向 Windows 的桌面情景模式软件。  
-开机后弹出情景选择，根据用户本次要做的事情快速组织推荐应用，并一键进入对应使用状态。
+一个面向 Windows 的桌面情景模式软件。
+开机后弹出“本次开机做什么”的情景选择窗口，根据用户当前要做的事情组织推荐应用，并由用户自己勾选本次真正要启动的软件。
 
-当前版本基于 `PySide6` 构建，界面风格偏向 Windows 11。
+当前版本基于 `PySide6` 构建，界面风格偏向 Windows 11，支持单文件 `exe` 分发。
 
 ## 仓库信息
 
 - GitHub: `https://github.com/sakura-love/Windowscene`
 - License: `MIT`
 - 平台: `Windows`
-- 语言: `Python 3`
+- 技术栈: `Python 3` + `PySide6`
 
-## 功能特点
+## 当前功能
 
-- 开机自启动
-- 开机后弹出“本次开机做什么”情景窗口
-- 支持情景模式选择：游戏、视频、音乐、阅读、上网、编程、工作
-- 根据情景推荐对应应用
-- 支持手动配置每个情景的应用列表
-- 支持简单智能识别常用应用
-- 支持一键启动当前情景下的选中应用
+- 支持开机自启动
+- 支持开机后弹出情景模式选择
+- 支持情景模式：游戏、视频、音乐、阅读、上网、编程、工作
+- 支持手动配置每个情景的应用候选项
+- 配置的应用仅作为可选项，不会默认全部自动启动
+- 支持推荐应用卡片勾选后再启动
+- 支持全盘扫描和指定位置扫描应用
+- 支持首次扫描后本地缓存结果
+- 支持分类化常见应用和游戏规则库
+- 支持 `.url`、`.exe`、`.lnk` 等类型的图标兜底识别
 
-## 技术栈
+## 下载与使用
 
-- Python 3
-- PySide6
+如果你只是想使用软件，直接下载 Release 中的 `Windowscene.exe` 即可。
+
+当前发布版已经支持单文件分发：
+
+- 用户只需要下载一个 `exe`
+- 默认配置会在首次运行时自动初始化
+- 后续情景配置会由程序自动保存
 
 ## 界面预览
 
@@ -33,70 +41,62 @@
 
 ![Windowscene 主界面](screenshots/main.png)
 
-后续还可以继续补充：
+## 本地开发
 
-- 开机情景选择弹窗截图
-- 推荐应用选择截图
-
-## 项目结构
-
-```text
-app.py
-qt_app.py
-scene_config.json
-requirements.txt
-app_icon.ico
-LICENSE
-RELEASE_TEMPLATE.md
-```
-
-## 安装依赖
+### 安装依赖
 
 ```powershell
 cd E:\AIwork\Windowscene-GitHub
 pip install -r requirements.txt
 ```
 
-## 本地运行
+### 运行
 
 ```powershell
 cd E:\AIwork\Windowscene-GitHub
 python app.py
 ```
 
-## 打包为 EXE
+### 打包
 
 ```powershell
 python -m PyInstaller --noconfirm --clean --onefile --windowed --name Windowscene --icon app_icon.ico app.py
 ```
 
-## 发布建议
+## 项目结构
 
-- 发布文案可参考 `RELEASE_TEMPLATE.md`
-- 可在 GitHub Releases 中上传 `Windowscene.exe`
-- 建议在仓库首页补上界面截图与版本说明
+```text
+app.py
+qt_app.py
+known_apps.json
+requirements.txt
+app_icon.ico
+LICENSE
+RELEASE_TEMPLATE.md
+```
 
 ## 配置说明
 
-`scene_config.json` 中保存了：
+程序运行时会维护这些数据：
 
-- 开机自启动开关
-- 开机后是否弹出情景窗口
-- 智能识别开关
-- 每个情景的关键词
-- 每个情景已手动配置的应用
+- `scene_config.json`：用户自己的情景配置
+- `known_apps.json`：常见应用与游戏分类规则
+- `app_scan_cache.json`：扫描后的本地缓存
 
-## 当前界面设计
+打包后的正式版会自动处理这些文件，普通用户不需要手动准备。
 
-- 左半区上半部分：情景模式
-- 左半区下半部分：推荐应用
-- 右半区：当前模式信息、快捷操作、系统设置、状态
-- 推荐应用按左到右、从上到下排列
+## v1.2.1 更新
 
-## 后续可以继续增强
+- 调整配置与规则文件读取逻辑，支持程序首次运行时自动生成默认配置
+- 优化打包后的资源加载方式，支持单 `exe` 分发
+- 修正任务栏图标与窗口图标初始化逻辑
+- 重整右侧信息栏与快捷操作区布局，减少默认窗口大小下的堆叠问题
+- 补强 `.url` 快捷方式与部分 `.exe` 的图标获取逻辑
+- 扩充常见应用与游戏分类规则库
 
-- 提高 `.lnk` 和 `.exe` 图标提取成功率
-- 接入更完整的 Windows 已安装软件识别
+## 后续方向
+
+- 继续提升 `.lnk`、`.url`、`.exe` 图标提取成功率
+- 增加更完整的 Windows 已安装应用识别
+- 增加托盘常驻
 - 增加系统动作，例如音量、电源模式、勿扰模式
-- 支持托盘常驻
-- 增加最近情景和智能推荐
