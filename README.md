@@ -39,7 +39,7 @@
 
 ### 主界面
 
-![Windowscene 主界面](screenshots/main.png)
+![Windowscene 主界面](screenshots/main2.png)
 
 ## 本地开发
 
