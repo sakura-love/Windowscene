@@ -8,6 +8,9 @@ build/
 dist/
 *.spec
 *.tmp
+version_info.txt
+*.exe
+CHANGELOG_TEMP.md
 
 .vscode/
 .idea/

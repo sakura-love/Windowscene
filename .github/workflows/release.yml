@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 需要完整历史来生成 changelog
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 生成版本信息
+        run: python scripts/generate_version_info.py
+
+      - name: 打包 EXE
+        run: |
+          pyinstaller --onefile --windowed `
+            --name "Windowscene" `
+            --icon "app_icon.ico" `
+            --add-data "scene_config.json;." `
+            --add-data "known_apps.json;." `
+            --version-file "version_info.txt" `
+            app.py
+
+      - name: 生成 Changelog
+        run: |
+          # 提取本次 tag 与上一个 tag 之间的 commits
+          $currentTag = "${{ github.ref_name }}"
+          $previousTag = git describe --tags --abbrev=0 "$currentTag^" 2>$null
+
+          if ($previousTag) {
+            $log = git log "$previousTag..$currentTag" --pretty=format:"- %s (%h)" --no-merges
+          } else {
+            $log = git log --pretty=format:"- %s (%h)" --no-merges
+          }
+
+          $changelog = @"
+          ## $currentTag
+
+          $log
+          "@
+
+          $changelog | Out-File -Encoding utf8 CHANGELOG_TEMP.md
+          Write-Output $changelog
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Windowscene ${{ github.ref_name }}"
+          body_path: CHANGELOG_TEMP.md
+          files: dist/Windowscene.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
